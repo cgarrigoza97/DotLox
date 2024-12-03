@@ -1,0 +1,2 @@
+﻿
+DotLox.DotLox.Init(args);

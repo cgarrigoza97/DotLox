@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotLox", "DotLox\DotLox.csproj", "{0A3B5B2B-CD31-403C-8D7E-0A4B3DA72721}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A3B5B2B-CD31-403C-8D7E-0A4B3DA72721}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A3B5B2B-CD31-403C-8D7E-0A4B3DA72721}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A3B5B2B-CD31-403C-8D7E-0A4B3DA72721}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A3B5B2B-CD31-403C-8D7E-0A4B3DA72721}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
