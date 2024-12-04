@@ -128,8 +128,7 @@ public class Scanner
         while (IsAlphaNumeric(Peek())) Advance();
         
         var text = _source.Substring(start, current - start);
-        var type = _keywords[text];
-        if (type == null) type = TokenType.Identifier;
+        var type = _keywords.ContainsKey(text) ? _keywords[text] : TokenType.Identifier;
         
         AddToken(type);
     }
@@ -217,7 +216,7 @@ public class Scanner
 
     private void AddToken(TokenType type, object literal)
     {
-        var text = _source.Substring(start, current);
+        var text = _source.Substring(start, current - start);
         _tokens.Add(new Token(type, text, literal, line));
     }
 }
