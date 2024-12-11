@@ -1,7 +1,11 @@
-﻿namespace DotLox;
+﻿using DotLox.Enums;
+
+namespace DotLox;
 
 public class DotLox
 {
+    // TODO: Add support to Lox’s scanner for C-style /* ... */ block comments. Make sure to handle newlines in them. Consider allowing them to nest. Is adding support for nesting more work than you expected? Why?
+    
     private static bool hadError = false;
 
     public static void Init(string[] args)
@@ -46,10 +50,12 @@ public class DotLox
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
 
-        foreach (var token in tokens)
-        {
-            Console.WriteLine(token);
-        }
+        var parser = new Parser(tokens);
+        var expression = parser.Parse();
+
+        if (hadError) return;
+        
+        Console.WriteLine(new AstPrinter().Print(expression));
     }
 
     public static void Error(int line, string message)
@@ -61,5 +67,17 @@ public class DotLox
     {
         Console.Error.WriteLine($"[line {line}] Error {where}: {message}", line, where, message);
         hadError = true;
+    }
+
+    public static void Error(Token token, string message)
+    {
+        if (token.Type == TokenType.Eof)
+        {
+            Report(token.Line, " at end", message);
+        }
+        else
+        {
+            Report(token.Line, $" at {token.Lexeme}", message);
+        }
     }
 }

@@ -91,6 +91,10 @@ public class Scanner
                     // Comment is consumed until the end of the line
                     while (Peek() != '\n' && !IsAtEnd()) Advance();
                 }
+                else if (Match('*'))
+                {
+                    BlockCommentHandler();
+                }
                 else
                 {
                     AddToken(TokenType.Slash);
@@ -166,6 +170,22 @@ public class Scanner
         
         var value = _source.Substring(start, current - start);
         AddToken(TokenType.String, value);
+    }
+
+    private void BlockCommentHandler()
+    {
+        // Peek() != '\n' && !IsAtEnd()
+        var peekedChar = Peek();
+        if (peekedChar != '*')
+        {
+            if (peekedChar == '\n') line++;
+            Advance();
+        }
+
+        while (peekedChar != '*' && !IsAtEnd())
+        {
+            
+        }
     }
 
     private bool Match(char expected)
