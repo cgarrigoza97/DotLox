@@ -4,10 +4,10 @@ namespace DotLox;
 
 public class DotLox
 {
-    // TODO: Add support to Lox’s scanner for C-style /* ... */ block comments. Make sure to handle newlines in them. Consider allowing them to nest. Is adding support for nesting more work than you expected? Why?
-    
+    private static readonly Interpreter _interpreter = new Interpreter(); 
     private static bool hadError = false;
-
+    private static bool hadRuntimeError = false;
+    
     public static void Init(string[] args)
     {
         if (args.Length > 1)
@@ -31,6 +31,7 @@ public class DotLox
         Run(fileAsString);
         
         if (hadError) Environment.Exit(65);
+        if (hadRuntimeError) Environment.Exit(70);
     }
 
     private static void RunPrompt()
@@ -55,12 +56,18 @@ public class DotLox
 
         if (hadError) return;
         
-        Console.WriteLine(new AstPrinter().Print(expression));
+        _interpreter.Interpret(expression);
     }
 
     public static void Error(int line, string message)
     {
         Report(line, "", message);
+    }
+
+    public static void RuntimeError(RuntimeError error)
+    {
+        Console.Error.WriteLine($"{error.Message} \n[line {error.Token.Line}]");
+        hadRuntimeError = true;
     }
 
     private static void Report(int line, string where, string message)
