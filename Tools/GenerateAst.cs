@@ -15,10 +15,19 @@ public class GenerateAst
 
         var outputDir = args[0];
         DefineAst(outputDir, "Expr", [
+            "Assign: Token name, Expr value",
             "Binary: Expr left, Token @operator, Expr right",
             "Grouping: Expr expression",
             "Literal: object value",
-            "Unary: Token @operator, Expr right"
+            "Unary: Token @operator, Expr right",
+            "Variable: Token name"
+        ]);
+        
+        DefineAst(outputDir, "Stmt", [
+            "Block: List<Stmt> statements",
+            "Expression: Expr expr",
+            "Print: Expr expr",
+            "Var: Token name, Expr initializer"
         ]);
     }
 
@@ -42,14 +51,14 @@ public class GenerateAst
             DefineType(writer, baseName, className, fields);
         }
         
-        writer.WriteLine("\tpublic abstract T Accept<T>(Visitor<T> visitor);");
+        writer.WriteLine("\tpublic abstract T Accept<T>(IVisitor<T> visitor);");
         
         writer.WriteLine("}");
     }
 
     private static void DefineVisitor(StreamWriter writer, string baseName, List<string> types)
     {
-        writer.WriteLine("\tpublic interface Visitor<T>");
+        writer.WriteLine("\tpublic interface IVisitor<T>");
         writer.WriteLine("\t{");
 
         foreach (var type in types)
@@ -88,7 +97,7 @@ public class GenerateAst
         writer.WriteLine("\t\t}");
         
         writer.WriteLine("");
-        writer.WriteLine("\t\tpublic override T Accept<T>(Visitor<T> visitor)");
+        writer.WriteLine("\t\tpublic override T Accept<T>(IVisitor<T> visitor)");
         writer.WriteLine("\t\t{");
         writer.WriteLine($"\t\t\treturn visitor.Visit{className}{baseName}(this);");
         writer.WriteLine("\t\t}");

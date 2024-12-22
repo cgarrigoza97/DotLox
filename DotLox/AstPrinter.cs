@@ -1,12 +1,17 @@
 ﻿namespace DotLox;
 
-public class AstPrinter : Expr.Visitor<string>
+public class AstPrinter : Expr.IVisitor<string>
 {
     public string Print(Expr expr)
     {
         return expr.Accept(this);
     }
-    
+
+    public string VisitAssignExpr(Expr.Assign expr)
+    {
+        throw new NotImplementedException();
+    }
+
     public string VisitBinaryExpr(Expr.Binary expr)
     {
         return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
@@ -26,6 +31,11 @@ public class AstPrinter : Expr.Visitor<string>
     public string VisitUnaryExpr(Expr.Unary expr)
     {
         return Parenthesize(expr.Operator.Lexeme, expr.Right);
+    }
+
+    public string VisitVariableExpr(Expr.Variable expr)
+    {
+        return Parenthesize(expr.Name.Lexeme);
     }
 
     private string Parenthesize(string name, params Expr[] exprs)

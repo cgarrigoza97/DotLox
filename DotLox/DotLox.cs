@@ -52,11 +52,11 @@ public class DotLox
         var tokens = scanner.ScanTokens();
 
         var parser = new Parser(tokens);
-        var expression = parser.Parse();
+        var statements = parser.Parse();
 
         if (hadError) return;
         
-        _interpreter.Interpret(expression);
+        _interpreter.Interpret(statements);
     }
 
     public static void Error(int line, string message)

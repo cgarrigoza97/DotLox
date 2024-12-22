@@ -2,21 +2,32 @@
 
 namespace DotLox;
 
-public class Interpreter : Expr.Visitor<object>
+public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
-    public void Interpret(Expr expresion)
+    private LoxEnvironment _loxEnvironment = new LoxEnvironment();
+    
+    public void Interpret(List<Stmt> statements)
     {
         try
         {
-            var value = Evaluate(expresion);
-            Console.WriteLine(Stringify(value));
+            foreach (var statement in statements)
+            {
+                Execute(statement);
+            }
         }
-        catch (RuntimeError error)
+        catch (RuntimeError e)
         {
-            DotLox.RuntimeError(error);
+            DotLox.RuntimeError(e);
         }
     }
-    
+
+    public object? VisitAssignExpr(Expr.Assign expr)
+    {
+        var value = Evaluate(expr.Value);
+        _loxEnvironment.Assign(expr.Name, value);
+        return value;
+    }
+
     public object VisitBinaryExpr(Expr.Binary expr)
     {
         var left = Evaluate(expr.Left);
@@ -26,7 +37,7 @@ public class Interpreter : Expr.Visitor<object>
         {
             case TokenType.BangEqual:
                 return !IsEqual(left, right);
-            case TokenType.Equal:
+            case TokenType.EqualEqual:
                 return IsEqual(left, right);
             case TokenType.Greater:
                 CheckNumberOperands(expr.Operator, left, right);
@@ -88,6 +99,11 @@ public class Interpreter : Expr.Visitor<object>
         return null;
     }
 
+    public object? VisitVariableExpr(Expr.Variable expr)
+    {
+        return _loxEnvironment.Get(expr.Name);
+    }
+
     private void CheckNumberOperand(Token @operator, object operand)
     {
         if (operand is double) return;
@@ -136,5 +152,59 @@ public class Interpreter : Expr.Visitor<object>
     private object Evaluate(Expr expr)
     {
         return expr.Accept(this);
+    }
+
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
+    }
+
+    public void ExecuteBlock(List<Stmt> statements, LoxEnvironment environment)
+    {
+        var previous = _loxEnvironment;
+        try
+        {
+            _loxEnvironment = environment;
+
+            foreach (var statement in statements)
+            {
+                Execute(statement);
+            }
+        }
+        finally
+        {
+            _loxEnvironment = previous;
+        }
+    }
+
+    public object? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.Statements, new LoxEnvironment(_loxEnvironment));
+        return null;
+    }
+
+    public object? VisitExpressionStmt(Stmt.Expression stmt)
+    {
+        Evaluate(stmt.Expr);
+        return null;
+    }
+
+    public object? VisitPrintStmt(Stmt.Print stmt)
+    {
+        var value = Evaluate(stmt.Expr);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    public object? VisitVarStmt(Stmt.Var stmt)
+    {
+        object? value = null;
+        if (stmt.Initializer != null)
+        {
+            value = Evaluate(stmt.Initializer);
+        }
+        
+        _loxEnvironment.Define(stmt.Name.Lexeme, value);
+        return null;
     }
 }
