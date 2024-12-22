@@ -83,6 +83,22 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return expr.Value;
     }
 
+    public object? VisitLogicalExpr(Expr.Logical expr)
+    {
+        var left = Evaluate(expr.Left);
+
+        if (expr.Operator.Type == TokenType.Or)
+        {
+            if (IsTruthy(left)) return left;
+        }
+        else
+        {
+            if (!IsTruthy(left)) return left;
+        }
+        
+        return Evaluate(expr.Right);
+    }
+
     public object VisitUnaryExpr(Expr.Unary expr)
     {
         var right = Evaluate(expr.Right);
@@ -189,6 +205,20 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitIfStmt(Stmt.If stmt)
+    {
+        if (IsTruthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.ThenBranch);
+        }
+        else if (stmt.ElseBranch != null)
+        {
+            Execute(stmt.ElseBranch);
+        }
+
+        return null;
+    }
+
     public object? VisitPrintStmt(Stmt.Print stmt)
     {
         var value = Evaluate(stmt.Expr);
@@ -205,6 +235,16 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         }
         
         _loxEnvironment.Define(stmt.Name.Lexeme, value);
+        return null;
+    }
+
+    public object? VisitWhileStmt(Stmt.While stmt)
+    {
+        while (IsTruthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.Body);
+        }
+
         return null;
     }
 }
