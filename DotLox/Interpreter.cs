@@ -4,7 +4,16 @@ namespace DotLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
-    private LoxEnvironment _loxEnvironment = new LoxEnvironment();
+    public LoxEnvironment Globals { get; }
+    private LoxEnvironment _loxEnvironment;
+
+    public Interpreter()
+    {
+        Globals = new LoxEnvironment();
+        _loxEnvironment = Globals;
+        
+        Globals.Define("clock", new Native.ClockFunction());
+    }
     
     public void Interpret(List<Stmt> statements)
     {
@@ -71,6 +80,29 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         }
 
         return null;
+    }
+
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        var callee = Evaluate(expr.Callee);
+
+        var arguments = new List<object>();
+        foreach (var argument in expr.Arguments)
+        {
+            arguments.Add(Evaluate(argument));
+        }
+
+        if (callee is not ILoxCallable function)
+        {
+            throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+        }
+
+        if (arguments.Count != function.Arity())
+        {
+            throw new RuntimeError(expr.Paren, $"Expected {function.Arity()} arguments but got {arguments.Count}.");
+        }
+
+        return function.Call(this, arguments);
     }
 
     public object VisitGroupingExpr(Expr.Grouping expr)
@@ -205,6 +237,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        var function = new LoxFunction(stmt, _loxEnvironment);
+        _loxEnvironment.Define(stmt.Name.Lexeme, function);
+        return null;
+    }
+
     public object? VisitIfStmt(Stmt.If stmt)
     {
         if (IsTruthy(Evaluate(stmt.Condition)))
@@ -224,6 +263,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         var value = Evaluate(stmt.Expr);
         Console.WriteLine(Stringify(value));
         return null;
+    }
+
+    public object? VisitReturnStmt(Stmt.Return stmt)
+    {
+        object? value = null;
+        if (stmt.Value != null) value = Evaluate(stmt.Value);
+
+        throw new Return(value);
     }
 
     public object? VisitVarStmt(Stmt.Var stmt)

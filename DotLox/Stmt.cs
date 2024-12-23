@@ -6,8 +6,10 @@ public abstract class Stmt
 	{
 		public T VisitBlockStmt(Block stmt);
 		public T VisitExpressionStmt(Expression stmt);
+		public T VisitFunctionStmt(Function stmt);
 		public T VisitIfStmt(If stmt);
 		public T VisitPrintStmt(Print stmt);
+		public T VisitReturnStmt(Return stmt);
 		public T VisitVarStmt(Var stmt);
 		public T VisitWhileStmt(While stmt);
 	}
@@ -39,6 +41,25 @@ public abstract class Stmt
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitExpressionStmt(this);
+		}
+	}
+
+	public class Function : Stmt
+	{
+		public Token Name { get; }
+		public List<Token> Params { get; }
+		public List<Stmt> Body { get; }
+
+		public Function(Token name, List<Token> @params, List<Stmt> body)
+		{
+			Name = name;
+			Params = @params;
+			Body = body;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitFunctionStmt(this);
 		}
 	}
 
@@ -76,12 +97,29 @@ public abstract class Stmt
 		}
 	}
 
+	public class Return : Stmt
+	{
+		public Token Keyword { get; }
+		public Expr? Value { get; }
+
+		public Return(Token keyword, Expr? value)
+		{
+			Keyword = keyword;
+			Value = value;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitReturnStmt(this);
+		}
+	}
+
 	public class Var : Stmt
 	{
 		public Token Name { get; }
-		public Expr Initializer { get; }
+		public Expr? Initializer { get; }
 
-		public Var(Token name, Expr initializer)
+		public Var(Token name, Expr? initializer)
 		{
 			Name = name;
 			Initializer = initializer;
