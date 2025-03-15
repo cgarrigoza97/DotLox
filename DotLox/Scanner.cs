@@ -91,6 +91,19 @@ public class Scanner
                     // Comment is consumed until the end of the line
                     while (Peek() != '\n' && !IsAtEnd()) Advance();
                 }
+                else if (Match('*'))
+                {
+                    while (!IsAtEnd() && !(Peek() == '*' && PeekNext() == '/'))
+                    {
+                        if (Peek() == '\n') line++;
+                        Advance();
+                    }
+
+                    if (Peek() == '*' && PeekNext() == '/')
+                    {
+                        AdvanceNext();
+                    }
+                }
                 else
                 {
                     AddToken(TokenType.Slash);
@@ -207,6 +220,18 @@ public class Scanner
     private char Advance()
     {
         return _source[current++];
+    }
+
+    private char AdvanceNext()
+    {
+        if (current + 2 >= _source.Length)
+        {
+            current = _source.Length;
+            return '\0';
+        }
+        
+        current += 2;
+        return _source[current];
     }
 
     private void AddToken(TokenType type)
