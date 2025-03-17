@@ -16,6 +16,7 @@ public class GenerateAst
         var outputDir = args[0];
         DefineAst(outputDir, "Expr", [
             "Binary: Expr left, Token @operator, Expr right",
+            "Ternary: Expr first, Expr second, Expr third",
             "Grouping: Expr expression",
             "Literal: object value",
             "Unary: Token @operator, Expr right"
@@ -28,7 +29,7 @@ public class GenerateAst
         using var writer = new StreamWriter(path, false, Encoding.UTF8);
         
         writer.WriteLine("namespace DotLox;");
-        writer.WriteLine("");
+        writer.WriteLine(""); 
         writer.WriteLine($"public abstract class {baseName}");
         writer.WriteLine("{");
 

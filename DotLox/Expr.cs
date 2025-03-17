@@ -5,6 +5,7 @@ public abstract class Expr
 	public interface Visitor<T>
 	{
 		public T VisitBinaryExpr(Binary expr);
+		public T VisitTernaryExpr(Ternary expr);
 		public T VisitGroupingExpr(Grouping expr);
 		public T VisitLiteralExpr(Literal expr);
 		public T VisitUnaryExpr(Unary expr);
@@ -26,6 +27,25 @@ public abstract class Expr
 		public override T Accept<T>(Visitor<T> visitor)
 		{
 			return visitor.VisitBinaryExpr(this);
+		}
+	}
+
+	public class Ternary : Expr
+	{
+		public Expr First { get; }
+		public Expr Second { get; }
+		public Expr Third { get; }
+
+		public Ternary(Expr first, Expr second, Expr third)
+		{
+			First = first;
+			Second = second;
+			Third = third;
+		}
+
+		public override T Accept<T>(Visitor<T> visitor)
+		{
+			return visitor.VisitTernaryExpr(this);
 		}
 	}
 

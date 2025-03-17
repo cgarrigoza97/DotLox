@@ -33,7 +33,23 @@ public class Parser
 
     private Expr Comma()
     {
-        return HandleLeftAssociativeBinaryOperator(Equality, TokenType.Comma);
+        return HandleLeftAssociativeBinaryOperator(Ternary, TokenType.Comma);
+    }
+
+    private Expr Ternary()
+    {
+        var expr = Equality();
+
+        if (Match(TokenType.QuestionMark))
+        {
+            var secondExpr = Ternary();
+            Consume(TokenType.Colon, "Expect ')' after expression.");
+            var thirdExpr = Ternary();
+            
+            return new Expr.Ternary(expr, secondExpr, thirdExpr);
+        }
+        
+        return expr;
     }
 
     private Expr Equality()

@@ -12,6 +12,15 @@ public class AstPrinter : Expr.Visitor<string>
         return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
     }
 
+    public string VisitTernaryExpr(Expr.Ternary expr)
+    {
+        var condition = expr.First.Accept(this);
+        var truthyBranch = expr.Second.Accept(this);
+        var thenBranch = expr.Third.Accept(this);
+
+        return $"[{condition} ? {truthyBranch} : {thenBranch}]";
+    }
+
     public string VisitGroupingExpr(Expr.Grouping expr)
     {
         return Parenthesize("group", expr.Expression);
