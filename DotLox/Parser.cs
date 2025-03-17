@@ -28,7 +28,12 @@ public class Parser
     
     private Expr Expression()
     {
-        return Equality();
+        return Comma();
+    }
+
+    private Expr Comma()
+    {
+        return HandleLeftAssociativeBinaryOperator(Equality, TokenType.Comma);
     }
 
     private Expr Equality()
