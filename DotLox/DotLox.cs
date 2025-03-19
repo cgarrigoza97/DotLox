@@ -41,18 +41,18 @@ public class DotLox
             Console.Write("> ");
             var line = Console.ReadLine();
             if (line == null) break;
-            Run(line);
+            Run(line, true);
             hadError = false;
         }
     }
 
-    private static void Run(string source)
+    private static void Run(string source, bool isREPL = false)
     {
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
 
         var parser = new Parser(tokens);
-        var statements = parser.Parse();
+        var statements = parser.Parse(isREPL);
 
         if (hadError) return;
         

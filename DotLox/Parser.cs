@@ -14,9 +14,15 @@ public class Parser
         _tokens = tokens;
     }
 
-    public List<Stmt> Parse()
+    public List<Stmt> Parse(bool isREPL = false)
     {
         var statements = new List<Stmt>();
+
+        if (isREPL && IsExpression())
+        {
+            TransformToPrintStmt();
+        }
+        
         while (!IsAtEnd())
         {
             statements.Add(Declaration());
@@ -267,5 +273,16 @@ public class Parser
         }
 
         return expr;
+    }
+
+    private void TransformToPrintStmt()
+    {
+        _tokens.Insert(0, new Token(TokenType.Print, "Print", null, 1));
+        _tokens.Insert(_tokens.Count - 1, new Token(TokenType.Semicolon, ";", null, 2));
+    }
+
+    private bool IsExpression()
+    {
+        return _tokens[^2].Type != TokenType.Semicolon;
     }
 }
