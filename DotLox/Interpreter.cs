@@ -204,7 +204,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             value = Evaluate(stmt.Initializer);
         }
         
-        _loxEnvironment.Define(stmt.Name.Lexeme, value);
+        _loxEnvironment.Define(stmt.Name.Lexeme, stmt.Initializer != null, value);
         return null;
     }
 }
