@@ -72,7 +72,7 @@ public class DotLox
 
     private static void Report(int line, string where, string message)
     {
-        Console.Error.WriteLine($"[line {line}] Error {where}: {message}", line, where, message);
+        Console.Error.WriteLine($"[line {line}] Error {where}: {message}");
         hadError = true;
     }
 
@@ -80,11 +80,12 @@ public class DotLox
     {
         if (token.Type == TokenType.Eof)
         {
-            Report(token.Line, " at end", message);
+            Report(token.Line, "at end", message);
         }
         else
         {
-            Report(token.Line, $" at {token.Lexeme}", message);
+            Report(token.Line, $"at {token.Lexeme}", message);
         }
     }
+    
 }
