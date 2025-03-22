@@ -4,6 +4,8 @@ namespace DotLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
+    private class BreakJump : Exception {}
+    
     private LoxEnvironment _loxEnvironment = new LoxEnvironment();
     
     public void Interpret(List<Stmt> statements)
@@ -260,10 +262,5 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         }
 
         return null;
-    }
-
-    private class BreakJump : Exception
-    {
-        
     }
 }
