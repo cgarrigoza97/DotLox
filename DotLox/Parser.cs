@@ -8,6 +8,7 @@ public class Parser
     
     private readonly List<Token> _tokens;
     private int _current = 0;
+    private bool _parsingLoop = false;
 
     public Parser(List<Token> tokens)
     {
@@ -47,11 +48,22 @@ public class Parser
 
     private Stmt Statement()
     {
-        if (Match(TokenType.For)) return ForStatement();
         if (Match(TokenType.If)) return IfStatement();
         if (Match(TokenType.Print)) return PrintStatement();
-        if (Match(TokenType.While)) return WhileStatement();
         if (Match(TokenType.LeftBrace)) return new Stmt.Block(Block());
+        if (Match(TokenType.For) || Match(TokenType.While))
+        {
+            _parsingLoop = true;
+            var stmt = Previous().Type == TokenType.For ? ForStatement() : WhileStatement();
+            _parsingLoop = false;
+            return stmt;
+        }
+        if (Match(TokenType.Break))
+        {
+            if (_parsingLoop) return BreakStatement();
+
+            throw Error(Previous(), "Cannot use 'break' outside loop");
+        }
 
         return ExpressionStatement();
     }
@@ -173,6 +185,14 @@ public class Parser
 
         Consume(TokenType.RightBrace, "Expect '}' after block.");
         return statements;
+    }
+
+    private Stmt BreakStatement()
+    {
+        var token = Previous();
+        Consume(TokenType.Semicolon, "Expect ';' after break.");
+        
+        return new Stmt.Break(token);
     }
 
     private Expr Assignment()

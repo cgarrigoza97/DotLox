@@ -26,6 +26,7 @@ public class GenerateAst
         
         DefineAst(outputDir, "Stmt", [
             "Block: List<Stmt> statements",
+            "Break: Token keyword",
             "Expression: Expr expr",
             "If: Expr condition, Stmt thenBranch, Stmt? elseBranch",
             "Print: Expr expr",

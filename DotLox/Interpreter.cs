@@ -199,6 +199,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitBreakStmt(Stmt.Break stmt)
+    {
+        throw new BreakJump();
+    }
+
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.Expr);
@@ -242,9 +247,23 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     {
         while (IsTruthy(Evaluate(stmt.Condition)))
         {
-            Execute(stmt.Body);
+
+            try
+            {
+                Execute(stmt.Body);
+            }
+            catch (Exception ex)
+            {
+                if (ex is BreakJump) return null;
+                throw;
+            }
         }
 
         return null;
+    }
+
+    private class BreakJump : Exception
+    {
+        
     }
 }

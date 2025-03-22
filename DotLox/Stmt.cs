@@ -5,6 +5,7 @@ public abstract class Stmt
 	public interface IVisitor<T>
 	{
 		public T VisitBlockStmt(Block stmt);
+		public T VisitBreakStmt(Break stmt);
 		public T VisitExpressionStmt(Expression stmt);
 		public T VisitIfStmt(If stmt);
 		public T VisitPrintStmt(Print stmt);
@@ -24,6 +25,21 @@ public abstract class Stmt
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitBlockStmt(this);
+		}
+	}
+
+	public class Break : Stmt
+	{
+		public Token Keyword { get; }
+
+		public Break(Token keyword)
+		{
+			Keyword = keyword;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitBreakStmt(this);
 		}
 	}
 

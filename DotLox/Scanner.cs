@@ -23,6 +23,7 @@ public class Scanner
         _keywords = new Dictionary<string, TokenType>
         {
             { "and", TokenType.And },
+            { "break", TokenType.Break },
             { "class", TokenType.Class },
             { "else", TokenType.Else },
             { "false", TokenType.False },
@@ -37,7 +38,7 @@ public class Scanner
             { "this", TokenType.This },
             { "true", TokenType.True },
             { "var", TokenType.Var },
-            { "while", TokenType.While }
+            { "while", TokenType.While },
         };
     }
 
