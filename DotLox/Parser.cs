@@ -293,6 +293,35 @@ public class Parser
             return new Expr.Unary(@operator, right);
         }
 
+        return FunctionExpr();
+    }
+
+    private Expr FunctionExpr()
+    {
+        if (Match(TokenType.Fun))
+        {
+            Consume(TokenType.LeftParen, "Expect '(' after anonymous 'function'.");
+            var parameters = new List<Token>();
+            if (!Check(TokenType.RightParen))
+            {
+                do
+                {
+                    if (parameters.Count >= 255)
+                    {
+                        Error(Peek(), "Can't have more than 255 parameters.");
+                    }
+
+                    parameters.Add(Consume(TokenType.Identifier, "Expect parameter name."));
+                } while (Match(TokenType.Comma));
+            }
+            Consume(TokenType.RightParen, "Expect ')' after parameters.");
+        
+            Consume(TokenType.LeftBrace, $"Expect '{{' before body.");
+            var body = Block();
+            
+            return new Expr.Function(parameters, body);
+        }
+        
         return Call();
     }
 

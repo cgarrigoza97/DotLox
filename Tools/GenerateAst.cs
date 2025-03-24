@@ -22,7 +22,8 @@ public class GenerateAst
             "Literal: object value",
             "Logical: Expr left, Token @operator, Expr right",
             "Unary: Token @operator, Expr right",
-            "Variable: Token name"
+            "Variable: Token name",
+            "Function: List<Token> @params, List<Stmt> body",
         ]);
         
         DefineAst(outputDir, "Stmt", [

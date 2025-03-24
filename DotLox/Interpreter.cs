@@ -152,6 +152,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return _loxEnvironment.Get(expr.Name);
     }
 
+    public object? VisitFunctionExpr(Expr.Function expr)
+    {
+        return new LoxAnonymousFunction(expr, _loxEnvironment);
+    }
+
     private void CheckNumberOperand(Token @operator, object operand)
     {
         if (operand is double) return;

@@ -12,6 +12,7 @@ public abstract class Expr
 		public T VisitLogicalExpr(Logical expr);
 		public T VisitUnaryExpr(Unary expr);
 		public T VisitVariableExpr(Variable expr);
+		public T VisitFunctionExpr(Function expr);
 	}
 
 	public class Assign : Expr
@@ -147,6 +148,23 @@ public abstract class Expr
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitVariableExpr(this);
+		}
+	}
+
+	public class Function : Expr
+	{
+		public List<Token> Params { get; }
+		public List<Stmt> Body { get; }
+
+		public Function(List<Token> @params, List<Stmt> body)
+		{
+			Params = @params;
+			Body = body;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitFunctionExpr(this);
 		}
 	}
 
