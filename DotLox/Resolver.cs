@@ -6,7 +6,7 @@ namespace DotLox;
 public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 {
     private readonly Interpreter _interpreter;
-    private readonly Stack<Dictionary<string, bool>> _scopes = new();
+    private readonly Stack<Dictionary<string, VariableInformation>> _scopes = new();
     private FunctionType _currentFunction = FunctionType.None; 
     
     public Resolver(Interpreter interpreter)
@@ -146,7 +146,7 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        if (_scopes.Count != 0 && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out var value) && value == false)
+        if (_scopes.Count != 0 && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out var value) && value.Defined == false)
         {
             DotLox.Error(expr.Name, "Can't read local variable in its own initializer");
         }
@@ -167,11 +167,12 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 
     private void BeginScope()
     {
-        _scopes.Push(new Dictionary<string, bool>());
+        _scopes.Push(new Dictionary<string, VariableInformation>());
     }
 
     private void EndScope()
     {
+        CheckUnusedVariables();
         _scopes.Pop();
     }
 
@@ -185,14 +186,32 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
             DotLox.Error(name, "Already a variable with this name in this scope.");
         }
         
-        scope.Put(name.Lexeme, false);
+        scope.Put(name.Lexeme, new VariableInformation(name));
         
     }
 
     private void Define(Token name)
     {
         if (_scopes.Count == 0) return;
-        _scopes.Peek().Put(name.Lexeme, true);
+
+        _scopes.Peek().TryGetValue(name.Lexeme, out var value);
+
+        value ??= new VariableInformation(name);
+
+        value.Defined = true;
+        
+        _scopes.Peek().Put(name.Lexeme, value);
+    }
+
+    private void MarkAsUsed(Token name)
+    {
+        if (_scopes.Count == 0) return;
+
+        _scopes.Peek().TryGetValue(name.Lexeme, out var value);
+
+        value!.Used = true;
+        
+        _scopes.Peek().Put(name.Lexeme, value);
     }
 
     private void ResolveLocal(Expr expr, Token name)
@@ -202,6 +221,7 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         {
             if (scopes[i].ContainsKey(name.Lexeme))
             {
+                MarkAsUsed(name);
                 _interpreter.Resolve(expr, _scopes.Count - 1 - i);
                 return;
             }
@@ -224,5 +244,28 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         EndScope();
 
         _currentFunction = enclosingFunction;
+    }
+
+    private void CheckUnusedVariables()
+    {
+        if (_scopes.Count != 0)
+        {
+            foreach (var variable in _scopes.Peek())
+            {
+                if (!variable.Value.Used) DotLox.Error(variable.Value.Name, $"Unused variable '{variable.Value.Name.Lexeme}'");
+            }
+        } 
+    }
+
+    private class VariableInformation
+    {
+        public bool Defined { get; set; }
+        public bool Used { get; set; }
+        public Token Name { get; }
+        
+        public VariableInformation(Token name)
+        {
+            Name = name;
+        }
     }
 }
