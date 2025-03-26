@@ -6,7 +6,7 @@ namespace DotLox;
 public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 {
     private readonly Interpreter _interpreter;
-    private readonly Stack<Dictionary<string, VariableInformation>> _scopes = new();
+    private readonly Stack<List<VariableInformation>> _scopes = new();
     private FunctionType _currentFunction = FunctionType.None; 
     
     public Resolver(Interpreter interpreter)
@@ -146,11 +146,15 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        if (_scopes.Count != 0 && _scopes.Peek().TryGetValue(expr.Name.Lexeme, out var value) && value.Defined == false)
+        if (_scopes.Count != 0)
         {
-            DotLox.Error(expr.Name, "Can't read local variable in its own initializer");
-        }
-
+            var variableInformation = _scopes.Peek().FirstOrDefault(x => x.Name.Lexeme == expr.Name.Lexeme);
+            if (variableInformation != null && !variableInformation.Defined)
+            {
+                DotLox.Error(expr.Name, "Can't read local variable in its own initializer");
+            }
+        } 
+        
         ResolveLocal(expr, expr.Name);
         return null;
     }
@@ -167,7 +171,7 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 
     private void BeginScope()
     {
-        _scopes.Push(new Dictionary<string, VariableInformation>());
+        _scopes.Push([]);
     }
 
     private void EndScope()
@@ -181,37 +185,35 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         if (_scopes.Count == 0) return;
 
         var scope = _scopes.Peek();
-        if (scope.ContainsKey(name.Lexeme))
+
+        var variableInformation = _scopes.Peek().FirstOrDefault(x => x.Name.Lexeme == name.Lexeme);
+        if (variableInformation != null)
         {
             DotLox.Error(name, "Already a variable with this name in this scope.");
         }
         
-        scope.Put(name.Lexeme, new VariableInformation(name));
-        
+        scope.Add(new VariableInformation(name));
     }
 
     private void Define(Token name)
     {
         if (_scopes.Count == 0) return;
 
-        _scopes.Peek().TryGetValue(name.Lexeme, out var value);
+        var variableInformations = _scopes.Peek().FirstOrDefault(x => x.Name.Lexeme == name.Lexeme);
+        if (variableInformations != null)
+        {
+            variableInformations.Defined = true;
+        }
 
-        value ??= new VariableInformation(name);
-
-        value.Defined = true;
-        
-        _scopes.Peek().Put(name.Lexeme, value);
     }
 
-    private void MarkAsUsed(Token name)
+    private void MarkAsUsed(int index)
     {
         if (_scopes.Count == 0) return;
 
-        _scopes.Peek().TryGetValue(name.Lexeme, out var value);
+        var variableInformation = _scopes.Peek()[index];
 
-        value!.Used = true;
-        
-        _scopes.Peek().Put(name.Lexeme, value);
+        variableInformation.Used = true;
     }
 
     private void ResolveLocal(Expr expr, Token name)
@@ -219,11 +221,15 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         var scopes = _scopes.ToArray();
         for (var i = _scopes.Count - 1; i >= 0; i--)
         {
-            if (scopes[i].ContainsKey(name.Lexeme))
+            for (var j = 0; j < scopes[i].Count; j++)
             {
-                MarkAsUsed(name);
-                _interpreter.Resolve(expr, _scopes.Count - 1 - i);
-                return;
+                if (scopes[i][j].Name.Lexeme == name.Lexeme)
+                {
+                    MarkAsUsed(j);
+                    expr.ScopeIndex = j;
+                    _interpreter.Resolve(expr, _scopes.Count - 1 - i, j);
+                    return;
+                }
             }
         }
     }
@@ -252,7 +258,7 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         {
             foreach (var variable in _scopes.Peek())
             {
-                if (!variable.Value.Used) DotLox.Error(variable.Value.Name, $"Unused variable '{variable.Value.Name.Lexeme}'");
+                if (!variable.Used) DotLox.Error(variable.Name, $"Unused variable '{variable.Name.Lexeme}'");
             }
         } 
     }

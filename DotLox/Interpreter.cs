@@ -1,5 +1,4 @@
 ﻿using DotLox.Enums;
-using DotLox.Extensions;
 
 namespace DotLox;
 
@@ -7,7 +6,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
     public LoxEnvironment Globals { get; }
     private LoxEnvironment _loxEnvironment;
-    private readonly Dictionary<Expr, int> _locals = new();
+    private readonly List<(Expr, int)?> _locals = new();
 
     public Interpreter()
     {
@@ -35,8 +34,10 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     public object? VisitAssignExpr(Expr.Assign expr)
     {
         var value = Evaluate(expr.Value);
-        if (_locals.TryGetValue(expr, out var distance))
+
+        if (expr.ScopeIndex.HasValue)
         {
+            var distance = _locals[expr.ScopeIndex.Value]!.Value.Item2;
             _loxEnvironment.AssignAt(distance, expr.Name, value);
         }
         else
@@ -164,14 +165,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     private object? LookUpVariable(Token name, Expr expr)
     {
-        if (_locals.TryGetValue(expr, out var distance))
+        if (expr.ScopeIndex.HasValue)
         {
-            return _loxEnvironment.GetAt(distance, name.Lexeme);
+            var variable = _locals[expr.ScopeIndex.Value]!;
+            return _loxEnvironment.GetAt(variable.Value.Item2, name.Lexeme);
         }
-        else
-        {
-            return Globals.Get(name);
-        }
+        
+        return Globals.Get(name);
     }
 
     private void CheckNumberOperand(Token @operator, object operand)
@@ -229,9 +229,17 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         stmt.Accept(this);
     }
 
-    public void Resolve(Expr expr, int depth)
+    public void Resolve(Expr expr, int depth, int index)
     {
-        _locals.Put(expr, depth);
+        if (_locals.Count <= index)
+        {
+            while (index - _locals.Count >= 0)
+            {
+                _locals.Add(null);
+            }
+        }
+
+        _locals[index] = (expr, depth);
     }
 
     public void ExecuteBlock(List<Stmt> statements, LoxEnvironment environment)

@@ -2,6 +2,9 @@
 
 public abstract class Expr
 {
+	
+	public int? ScopeIndex { get; set; }
+	
 	public interface IVisitor<T>
 	{
 		public T VisitAssignExpr(Assign expr);
