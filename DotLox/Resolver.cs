@@ -268,10 +268,9 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
 
     private void ResolveLocal(Expr expr, Token name)
     {
-        var scopes = _scopes.ToArray();
-        for (var i = 0; i < scopes.Length; i++)
+        for (var i = 0; i < _scopes.Count; i++)
         {
-            if (scopes[i].ContainsKey(name.Lexeme))
+            if (_scopes.ElementAt(i).ContainsKey(name.Lexeme))
             {
                 _interpreter.Resolve(expr, i);
                 return;
