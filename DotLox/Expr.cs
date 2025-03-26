@@ -7,9 +7,12 @@ public abstract class Expr
 		public T VisitAssignExpr(Assign expr);
 		public T VisitBinaryExpr(Binary expr);
 		public T VisitCallExpr(Call expr);
+		public T VisitGetExpr(Get expr);
 		public T VisitGroupingExpr(Grouping expr);
 		public T VisitLiteralExpr(Literal expr);
 		public T VisitLogicalExpr(Logical expr);
+		public T VisitSetExpr(Set expr);
+		public T VisitThisExpr(This expr);
 		public T VisitUnaryExpr(Unary expr);
 		public T VisitVariableExpr(Variable expr);
 	}
@@ -69,6 +72,23 @@ public abstract class Expr
 		}
 	}
 
+	public class Get : Expr
+	{
+		public Expr Object { get; }
+		public Token Name { get; }
+
+		public Get(Expr @object, Token name)
+		{
+			Object = @object;
+			Name = name;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitGetExpr(this);
+		}
+	}
+
 	public class Grouping : Expr
 	{
 		public Expr Expression { get; }
@@ -115,6 +135,40 @@ public abstract class Expr
 		public override T Accept<T>(IVisitor<T> visitor)
 		{
 			return visitor.VisitLogicalExpr(this);
+		}
+	}
+
+	public class Set : Expr
+	{
+		public Expr Object { get; }
+		public Token Name { get; }
+		public Expr Value { get; }
+
+		public Set(Expr @object, Token name, Expr value)
+		{
+			Object = @object;
+			Name = name;
+			Value = value;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitSetExpr(this);
+		}
+	}
+
+	public class This : Expr
+	{
+		public Token Keyword { get; }
+
+		public This(Token keyword)
+		{
+			Keyword = keyword;
+		}
+
+		public override T Accept<T>(IVisitor<T> visitor)
+		{
+			return visitor.VisitThisExpr(this);
 		}
 	}
 

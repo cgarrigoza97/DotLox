@@ -1,5 +1,4 @@
-﻿using DotLox.Enums;
-using DotLox.Extensions;
+﻿using DotLox.Extensions;
 
 namespace DotLox;
 
@@ -13,6 +12,22 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
     {
         _interpreter = interpreter;
     }
+
+    private enum FunctionType
+    {
+        None,
+        Function,
+        Initializer,
+        Method
+    }
+
+    private enum ClassType
+    {
+        None,
+        Class
+    }
+
+    private ClassType _currentClass = ClassType.None;
 
     public void Resolve(List<Stmt> statements)
     {
@@ -28,6 +43,34 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         Resolve(stmt.Statements);
         EndScope();
 
+        return null;
+    }
+
+    public object? VisitClassStmt(Stmt.Class stmt)
+    {
+        var enclosingClass = _currentClass;
+        _currentClass = ClassType.Class;
+        
+        Declare(stmt.Name);   
+        Define(stmt.Name);
+
+        BeginScope();
+        _scopes.Peek().Put("this", true);
+        
+        foreach (var method in stmt.Methods)
+        {
+            var declaration = FunctionType.Method;
+            if (method.Name.Lexeme.Equals("init"))
+            {
+                declaration = FunctionType.Initializer;
+            }
+            
+            ResolveFunction(method, declaration);
+        }
+        
+        EndScope();
+
+        _currentClass = enclosingClass;
         return null;
     }
 
@@ -69,6 +112,11 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         
         if (stmt.Value != null)
         {
+            if (_currentFunction == FunctionType.Initializer)
+            {
+                DotLox.Error(stmt.Keyword, "Can't return a value from an initializer");
+            }
+            
             Resolve(stmt.Value);
         }
 
@@ -120,6 +168,12 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         return null;
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+       Resolve(expr.Object);
+       return null;
+    }
+
     public object? VisitGroupingExpr(Expr.Grouping expr)
     {
         Resolve(expr.Expression);
@@ -135,6 +189,23 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
     {
         Resolve(expr.Left);
         Resolve(expr.Right);
+        return null;
+    }
+
+    public object? VisitSetExpr(Expr.Set expr)
+    {
+       Resolve(expr.Value); 
+       Resolve(expr.Object);
+       return null;
+    }
+
+    public object? VisitThisExpr(Expr.This expr)
+    {
+        if (_currentClass == ClassType.None)
+        {
+            DotLox.Error(expr.Keyword, "Can't use 'this' outside of a class.");
+        }
+        ResolveLocal(expr, expr.Keyword);
         return null;
     }
 
@@ -198,11 +269,11 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
     private void ResolveLocal(Expr expr, Token name)
     {
         var scopes = _scopes.ToArray();
-        for (var i = _scopes.Count - 1; i >= 0; i--)
+        for (var i = 0; i < scopes.Length; i++)
         {
             if (scopes[i].ContainsKey(name.Lexeme))
             {
-                _interpreter.Resolve(expr, _scopes.Count - 1 - i);
+                _interpreter.Resolve(expr, i);
                 return;
             }
         }

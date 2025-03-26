@@ -115,6 +115,17 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return function.Call(this, arguments);
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+        var @object = Evaluate(expr.Object);
+        if (@object is LoxInstance instance)
+        {
+            return instance.Get(expr.Name);
+        }
+
+        throw new RuntimeError(expr.Name, "Only instances have properties");
+    }
+
     public object VisitGroupingExpr(Expr.Grouping expr)
     {
         return Evaluate(expr.Expression);
@@ -139,6 +150,25 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         }
         
         return Evaluate(expr.Right);
+    }
+
+    public object? VisitSetExpr(Expr.Set expr)
+    {
+        var @object = Evaluate(expr.Object);
+
+        if (@object is not LoxInstance)
+        {
+            throw new RuntimeError(expr.Name, "Only instances have fields.");
+        }
+
+        var value = Evaluate(expr.Value);
+        ((LoxInstance)@object).Set(expr.Name, value);
+        return value;
+    }
+
+    public object? VisitThisExpr(Expr.This expr)
+    {
+        return LookUpVariable(expr.Keyword, expr);
     }
 
     public object VisitUnaryExpr(Expr.Unary expr)
@@ -258,6 +288,22 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitClassStmt(Stmt.Class stmt)
+    {
+        _loxEnvironment.Define(stmt.Name.Lexeme, null);
+
+        var methods = new Dictionary<string, LoxFunction>();
+        foreach (var method in stmt.Methods)
+        {
+            var function = new LoxFunction(method, _loxEnvironment, method.Name.Lexeme.Equals("init"));
+            methods.Put(method.Name.Lexeme, function);
+        }
+        
+        var @class = new LoxClass(stmt.Name.Lexeme, methods);
+        _loxEnvironment.Assign(stmt.Name, @class);
+        return null;
+    }
+
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.Expr);
@@ -266,7 +312,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     public object? VisitFunctionStmt(Stmt.Function stmt)
     {
-        var function = new LoxFunction(stmt, _loxEnvironment);
+        var function = new LoxFunction(stmt, _loxEnvironment, false);
         _loxEnvironment.Define(stmt.Name.Lexeme, function);
         return null;
     }
