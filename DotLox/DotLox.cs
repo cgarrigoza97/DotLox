@@ -55,6 +55,11 @@ public class DotLox
         var statements = parser.Parse();
 
         if (hadError) return;
+
+        var resolver = new Resolver(_interpreter);
+        resolver.Resolve(statements);
+
+        if (hadError) return;
         
         _interpreter.Interpret(statements);
     }

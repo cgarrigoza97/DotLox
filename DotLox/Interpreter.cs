@@ -1,4 +1,5 @@
 ﻿using DotLox.Enums;
+using DotLox.Extensions;
 
 namespace DotLox;
 
@@ -6,6 +7,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
     public LoxEnvironment Globals { get; }
     private LoxEnvironment _loxEnvironment;
+    private readonly Dictionary<Expr, int> _locals = new();
 
     public Interpreter()
     {
@@ -33,7 +35,15 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     public object? VisitAssignExpr(Expr.Assign expr)
     {
         var value = Evaluate(expr.Value);
-        _loxEnvironment.Assign(expr.Name, value);
+        if (_locals.TryGetValue(expr, out var distance))
+        {
+            _loxEnvironment.AssignAt(distance, expr.Name, value);
+        }
+        else
+        {
+            Globals.Assign(expr.Name, value);
+        }
+        
         return value;
     }
 
@@ -149,7 +159,19 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        return _loxEnvironment.Get(expr.Name);
+        return LookUpVariable(expr.Name, expr);
+    }
+
+    private object? LookUpVariable(Token name, Expr expr)
+    {
+        if (_locals.TryGetValue(expr, out var distance))
+        {
+            return _loxEnvironment.GetAt(distance, name.Lexeme);
+        }
+        else
+        {
+            return Globals.Get(name);
+        }
     }
 
     private void CheckNumberOperand(Token @operator, object operand)
@@ -205,6 +227,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     private void Execute(Stmt stmt)
     {
         stmt.Accept(this);
+    }
+
+    public void Resolve(Expr expr, int depth)
+    {
+        _locals.Put(expr, depth);
     }
 
     public void ExecuteBlock(List<Stmt> statements, LoxEnvironment environment)

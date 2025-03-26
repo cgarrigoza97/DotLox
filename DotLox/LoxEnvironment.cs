@@ -1,4 +1,6 @@
-﻿namespace DotLox;
+﻿using DotLox.Extensions;
+
+namespace DotLox;
 
 public class LoxEnvironment
 {
@@ -18,7 +20,18 @@ public class LoxEnvironment
     
     public void Define(string name, object? value)
     {
-        _values.Add(name, value);
+        _values.Put(name, value);
+    }
+
+    public object? GetAt(int distance, string name)
+    {
+        Ancestor(distance)._values.TryGetValue(name, out var value);
+        return value;
+    }
+
+    public void AssignAt(int distance, Token name, object? value)
+    {
+        Ancestor(distance)._values.Put(name.Lexeme, value);
     }
 
     public object? Get(Token name)
@@ -37,7 +50,7 @@ public class LoxEnvironment
     {
         if (_values.ContainsKey(name.Lexeme))
         {
-            _values[name.Lexeme] = value;
+            _values.Put(name.Lexeme, value);
             return;
         }
 
@@ -48,5 +61,16 @@ public class LoxEnvironment
         }
 
         throw new RuntimeError(name, $"Undefined variable {name.Lexeme}.");
+    }
+
+    private LoxEnvironment Ancestor(int distance)
+    {
+        var loxEnvironment = this;
+        for (var i = 0; i < distance; i++)
+        {
+            loxEnvironment = loxEnvironment!.Enclosing;
+        }
+
+        return loxEnvironment!;
     }
 }
