@@ -50,6 +50,14 @@ public class Parser
     private Stmt ClassDeclaration()
     {
         var name = Consume(TokenType.Identifier, "Expect class name.");
+
+        Expr.Variable? superclass = null;
+        if (Match(TokenType.Less))
+        {
+            Consume(TokenType.Identifier, "Expect superclass name.");
+            superclass = new Expr.Variable(Previous());
+        }
+        
         Consume(TokenType.LeftBrace, "Expect '{' before class body.");
 
         var methods = new List<Stmt.Function>();
@@ -60,7 +68,7 @@ public class Parser
 
         Consume(TokenType.RightBrace, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, superclass, methods);
     }
 
     private Stmt Statement()
@@ -372,6 +380,14 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
         {
             return new Expr.Literal(Previous().Literal);
+        }
+
+        if (Match(TokenType.Super))
+        {
+            var keyword = Previous();
+            Consume(TokenType.Dot, "Expect '.' after 'super'.");
+            var method = Consume(TokenType.Identifier, "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
         }
 
         if (Match(TokenType.This)) return new Expr.This(Previous());

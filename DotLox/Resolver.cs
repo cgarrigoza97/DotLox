@@ -24,7 +24,8 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
     private enum ClassType
     {
         None,
-        Class
+        Class,
+        Subclass
     }
 
     private ClassType _currentClass = ClassType.None;
@@ -54,6 +55,23 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         Declare(stmt.Name);   
         Define(stmt.Name);
 
+        if (stmt.Superclass != null && stmt.Name.Lexeme == stmt.Superclass.Name.Lexeme)
+        {
+            DotLox.Error(stmt.Superclass.Name, "A class can't inherit from itself");
+        }
+
+        if (stmt.Superclass != null)
+        {
+            _currentClass = ClassType.Subclass;
+            Resolve(stmt.Superclass);
+        }
+
+        if (stmt.Superclass != null)
+        {
+            BeginScope();
+            _scopes.Peek().Put("super", true);
+        }
+
         BeginScope();
         _scopes.Peek().Put("this", true);
         
@@ -69,6 +87,8 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         }
         
         EndScope();
+        
+        if (stmt.Superclass != null) EndScope();
 
         _currentClass = enclosingClass;
         return null;
@@ -197,6 +217,20 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
        Resolve(expr.Value); 
        Resolve(expr.Object);
        return null;
+    }
+
+    public object? VisitSuperExpr(Expr.Super expr)
+    {
+        if (_currentClass == ClassType.None)
+        {
+            DotLox.Error(expr.Keyword, "Can't use 'super' outside of a class.");
+        } 
+        else if (_currentClass != ClassType.Subclass)
+        {
+            DotLox.Error(expr.Keyword, "Can't use 'super' in a class with no superclass.");    
+        }
+        ResolveLocal(expr, expr.Keyword);
+        return null;
     }
 
     public object? VisitThisExpr(Expr.This expr)

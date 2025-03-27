@@ -48,6 +48,11 @@ public class AstPrinter : Expr.IVisitor<string>
         throw new NotImplementedException();
     }
 
+    public string VisitSuperExpr(Expr.Super expr)
+    {
+        throw new NotImplementedException();
+    }
+
     public string VisitThisExpr(Expr.This expr)
     {
         throw new NotImplementedException();

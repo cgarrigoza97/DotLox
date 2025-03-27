@@ -4,7 +4,7 @@ using DotLox.Extensions;
 namespace DotLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
-{
+{   
     public LoxEnvironment Globals { get; }
     private LoxEnvironment _loxEnvironment;
     private readonly Dictionary<Expr, int> _locals = new();
@@ -166,6 +166,26 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return value;
     }
 
+    public object? VisitSuperExpr(Expr.Super expr)
+    {
+        if (_locals.TryGetValue(expr, out var distance))
+        {
+            var superclass = (LoxClass)_loxEnvironment.GetAt(distance, "super")!;
+            var @object = (LoxInstance)_loxEnvironment.GetAt(distance - 1, "this")!;
+
+            var method = superclass.FindMethod(expr.Method.Lexeme);
+
+            if (method == null)
+            {
+                throw new RuntimeError(expr.Method, $"Undefined property {expr.Method.Lexeme}.");
+            }
+            
+            return method.Bind(@object);
+        }
+
+        return null;
+    }
+
     public object? VisitThisExpr(Expr.This expr)
     {
         return LookUpVariable(expr.Keyword, expr);
@@ -290,7 +310,23 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     public object? VisitClassStmt(Stmt.Class stmt)
     {
+        object? superclass = null;
+        if (stmt.Superclass != null)
+        {
+            superclass = Evaluate(stmt.Superclass);
+            if (superclass is not LoxClass)
+            {
+                throw new RuntimeError(stmt.Superclass.Name, "Superclass must be a class.");
+            }
+        }
+        
         _loxEnvironment.Define(stmt.Name.Lexeme, null);
+
+        if (stmt.Superclass != null)
+        {
+            _loxEnvironment = new LoxEnvironment(_loxEnvironment);
+            _loxEnvironment.Define("super", superclass);
+        }
 
         var methods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
@@ -299,7 +335,13 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             methods.Put(method.Name.Lexeme, function);
         }
         
-        var @class = new LoxClass(stmt.Name.Lexeme, methods);
+        var @class = new LoxClass(stmt.Name.Lexeme, (LoxClass?)superclass, methods);
+
+        if (superclass != null)
+        {
+            _loxEnvironment = _loxEnvironment.Enclosing!;
+        }
+        
         _loxEnvironment.Assign(stmt.Name, @class);
         return null;
     }
