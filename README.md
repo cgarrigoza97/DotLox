@@ -4,11 +4,14 @@
 
 ## Syntax grammar
 
-> <p>program        → declaration* EOF ;</p>
+``` 
+program        → declaration* EOF ;
+```
 
 ### Declarations
 
-> <p>declaration    → classDecl
+```
+declaration    → classDecl
                | funDecl
                | varDecl
                | statement ;
@@ -16,11 +19,13 @@
 classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
                  "{" function* "}" ;
 funDecl        → "fun" function ;
-varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;</p>
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
+```
 
 ### Statements
 
-> <p>statement      → exprStmt
+```
+statement      → exprStmt
                | forStmt
                | ifStmt
                | printStmt
@@ -37,11 +42,13 @@ ifStmt         → "if" "(" expression ")" statement
 printStmt      → "print" expression ";" ;
 returnStmt     → "return" expression? ";" ;
 whileStmt      → "while" "(" expression ")" statement ;
-block          → "{" declaration* "}" ;</p>
+block          → "{" declaration* "}"
+```
 
 ### Expressions
 
-> <p>expression     → assignment ;
+```
+expression     → assignment ;
 
 assignment     → ( call "." )? IDENTIFIER "=" assignment
                | logic_or ;
@@ -57,18 +64,23 @@ unary          → ( "!" | "-" ) unary | call ;
 call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 primary        → "true" | "false" | "nil" | "this"
                | NUMBER | STRING | IDENTIFIER | "(" expression ")"
-               | "super" "." IDENTIFIER ;</p>
+               | "super" "." IDENTIFIER
+```
 
 ### Utitily rules
 
-> <p>function       → IDENTIFIER "(" parameters? ")" block ;
+```
+function       → IDENTIFIER "(" parameters? ")" block ;
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
-arguments      → expression ( "," expression )* ;</p>
+arguments      → expression ( "," expression )* ;
+```
 
 ## Lexical grammar
 
-> <p>NUMBER         → DIGIT+ ( "." DIGIT+ )? ;
+```
+NUMBER         → DIGIT+ ( "." DIGIT+ )? ;
 STRING         → "\"" <any char except "\"">* "\"" ;
 IDENTIFIER     → ALPHA ( ALPHA | DIGIT )* ;
 ALPHA          → "a" ... "z" | "A" ... "Z" | "_" ;
-DIGIT          → "0" ... "9" ;</p>
+DIGIT          → "0" ... "9" ;
+```
