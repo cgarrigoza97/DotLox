@@ -22,6 +22,12 @@ public class LoxInstance
         var method = _class.FindMethod(name.Lexeme);
         if (method != null) return method.Bind(this);
 
+        var getter = _class.FindGetter(name.Lexeme);
+        if (getter != null) return getter.Bind(this);
+
+        var staticMethod = _class.FindStaticMethod(name.Lexeme);
+        if (staticMethod != null) return staticMethod;
+
         throw new RuntimeError(name, "Undefined property '" + name.Lexeme + "'.");
     }
 

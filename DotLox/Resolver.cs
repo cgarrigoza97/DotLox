@@ -73,6 +73,11 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         {
             ResolveFunction(staticMethod, FunctionType.StaticMethod);
         }
+
+        foreach (var getter in stmt.Getters)
+        {
+            getter.Accept(this);
+        }
         
         EndScope();
 

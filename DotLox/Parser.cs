@@ -54,15 +54,17 @@ public class Parser
 
         var methods = new List<Stmt.Function>();
         var staticMethods = new List<Stmt.Function>();
+        var getters = new List<Stmt.Function>();
         while (!Check(TokenType.RightBrace) && !IsAtEnd())
         {
             if (Match(TokenType.Class)) staticMethods.Add(Function("static method"));
+            else if (PeekNext()?.Type == TokenType.LeftBrace) getters.Add(Getter());
             else methods.Add(Function("method"));
         }
 
         Consume(TokenType.RightBrace, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, methods, staticMethods);
+        return new Stmt.Class(name, methods, staticMethods, getters);
     }
 
     private Stmt Statement()
@@ -194,6 +196,15 @@ public class Parser
         Consume(TokenType.Semicolon, "Expect ';' after expression.");
         
         return new Stmt.Expression(expr);
+    }
+
+    private Stmt.Function Getter()
+    {
+        var name = Consume(TokenType.Identifier, "Expect getter name.");
+        Consume(TokenType.LeftBrace, "Expect { after getter name.");
+        var body = Block();
+
+        return new Stmt.Function(name, [], body);
     }
 
     private Stmt.Function Function(string kind)
@@ -434,6 +445,16 @@ public class Parser
     private Token Peek()
     {
         return _tokens[_current];
+    }
+
+    private Token? PeekNext()
+    {
+        if (_current + 1 < _tokens.Count)
+        {
+            return _tokens[_current + 1];
+        }
+
+        return null;
     }
 
     private Token Previous()

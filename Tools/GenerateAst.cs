@@ -30,7 +30,7 @@ public class GenerateAst
         
         DefineAst(outputDir, "Stmt", [
             "Block: List<Stmt> statements",
-            "Class: Token name, List<Stmt.Function> methods, List<Stmt.Function> staticMethods",
+            "Class: Token name, List<Stmt.Function> methods, List<Stmt.Function> staticMethods, List<Stmt.Function> getters",
             "Expression: Expr expr",
             "Function: Token name, List<Token> @params, List<Stmt> body",
             "If: Expr condition, Stmt thenBranch, Stmt? elseBranch",

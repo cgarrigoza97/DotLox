@@ -6,11 +6,13 @@ public class LoxFunction : ILoxCallable
     private readonly LoxEnvironment _closure;
 
     private readonly bool _isInitializer;
+    private readonly bool _isGetter;
 
-    public LoxFunction(Stmt.Function declaration, LoxEnvironment closure, bool isInitializer)
+    public LoxFunction(Stmt.Function declaration, LoxEnvironment closure, bool isInitializer, bool isGetter = false)
     {
         _closure = closure;
         _isInitializer = isInitializer;
+        _isGetter = isGetter;
         _declaration = declaration;
     }
 
@@ -18,7 +20,7 @@ public class LoxFunction : ILoxCallable
     {
         var environment = new LoxEnvironment(_closure);
         environment.Define("this", instance);
-        return new LoxFunction(_declaration, environment, _isInitializer);
+        return new LoxFunction(_declaration, environment, _isInitializer, _isGetter);
     }
     
     public int Arity()
@@ -46,6 +48,12 @@ public class LoxFunction : ILoxCallable
         }
 
         if (_isInitializer) return _closure.GetAt(0, "this");
+        return null;
+    }
+
+    public object? TryCall(Interpreter interpreter, List<object> arguments)
+    {
+        if (_isGetter) return Call(interpreter, arguments);
         return null;
     }
 

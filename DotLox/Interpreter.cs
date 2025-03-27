@@ -120,6 +120,8 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         var @object = Evaluate(expr.Object);
         if (@object is LoxInstance instance)
         {
+            var result = instance.Get(expr.Name);
+            if (result is LoxFunction callableResult) return callableResult.TryCall(this, []);
             return instance.Get(expr.Name);
         }
 
@@ -299,6 +301,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
         var methods = new Dictionary<string, LoxFunction>();
         var staticMethods = new Dictionary<string, LoxFunction>();
+        var getters = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
         {
             var function = new LoxFunction(method, _loxEnvironment, method.Name.Lexeme.Equals("init"));
@@ -310,8 +313,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             var function = new LoxFunction(staticMethod, _loxEnvironment, false);
             staticMethods.Put(staticMethod.Name.Lexeme, function);
         }
+
+        foreach (var getter in stmt.Getters)
+        {
+            var function = new LoxFunction(getter, _loxEnvironment, false, true);
+            getters.Put(getter.Name.Lexeme, function);
+        }
         
-        var @class = new LoxClass(stmt.Name.Lexeme, methods, staticMethods);
+        var @class = new LoxClass(stmt.Name.Lexeme, methods, staticMethods, getters);
         _loxEnvironment.Assign(stmt.Name, @class);
         return null;
     }
