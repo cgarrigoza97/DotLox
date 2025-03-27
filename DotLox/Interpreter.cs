@@ -123,6 +123,11 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             return instance.Get(expr.Name);
         }
 
+        if (@object is LoxClass @class)
+        {
+            return @class.FindStaticMethod(expr.Name.Lexeme);
+        }
+
         throw new RuntimeError(expr.Name, "Only instances have properties");
     }
 
@@ -293,13 +298,20 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         _loxEnvironment.Define(stmt.Name.Lexeme, null);
 
         var methods = new Dictionary<string, LoxFunction>();
+        var staticMethods = new Dictionary<string, LoxFunction>();
         foreach (var method in stmt.Methods)
         {
             var function = new LoxFunction(method, _loxEnvironment, method.Name.Lexeme.Equals("init"));
             methods.Put(method.Name.Lexeme, function);
         }
+
+        foreach (var staticMethod in stmt.StaticMethods)
+        {
+            var function = new LoxFunction(staticMethod, _loxEnvironment, false);
+            staticMethods.Put(staticMethod.Name.Lexeme, function);
+        }
         
-        var @class = new LoxClass(stmt.Name.Lexeme, methods);
+        var @class = new LoxClass(stmt.Name.Lexeme, methods, staticMethods);
         _loxEnvironment.Assign(stmt.Name, @class);
         return null;
     }

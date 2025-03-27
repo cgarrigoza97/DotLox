@@ -18,7 +18,8 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         None,
         Function,
         Initializer,
-        Method
+        Method,
+        StaticMethod
     }
 
     private enum ClassType
@@ -66,6 +67,11 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
             }
             
             ResolveFunction(method, declaration);
+        }
+
+        foreach (var staticMethod in stmt.StaticMethods)
+        {
+            ResolveFunction(staticMethod, FunctionType.StaticMethod);
         }
         
         EndScope();
@@ -205,6 +211,12 @@ public class Resolver : Stmt.IVisitor<object?>, Expr.IVisitor<object?>
         {
             DotLox.Error(expr.Keyword, "Can't use 'this' outside of a class.");
         }
+
+        if (_currentFunction == FunctionType.StaticMethod)
+        {
+            DotLox.Error(expr.Keyword, "Can't use 'this' inside a static method");
+        }
+        
         ResolveLocal(expr, expr.Keyword);
         return null;
     }

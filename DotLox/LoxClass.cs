@@ -4,16 +4,28 @@ public class LoxClass : ILoxCallable
 {
     public string Name { get; }
     private readonly Dictionary<string, LoxFunction> _methods;
+    private readonly Dictionary<string, LoxFunction> _staticMethods;
     
-    public LoxClass(string name, Dictionary<string, LoxFunction> methods)
+    public LoxClass(string name, Dictionary<string, LoxFunction> methods, Dictionary<string, LoxFunction> staticMethods)
     {
         Name = name;
         _methods = methods;
+        _staticMethods = staticMethods;
     }
 
     public LoxFunction? FindMethod(string name)
     {
         if (_methods.TryGetValue(name, out var value))
+        {
+            return value;
+        }
+
+        return null;
+    }
+
+    public LoxFunction? FindStaticMethod(string name)
+    {
+        if (_staticMethods.TryGetValue(name, out var value))
         {
             return value;
         }
